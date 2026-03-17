@@ -35,6 +35,7 @@ type Session struct {
 	listener               *net.TCPListener
 	incomingConns          chan net.Conn
 	dhtTracker             *DHTTracker
+	upnp                   *upnpManager
 	uploadQueue            *UploadQueue
 	credits                *PeerCreditManager
 	friendSlots            map[string]bool
@@ -93,49 +94,67 @@ func (s *Session) ConfigureSession(st Settings) {
 
 func (s *Session) AddTransfer(hash protocol.Hash, size int64, file *os.File) (TransferHandle, error) {
 	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	if t, ok := s.transfers[hash]; ok {
+		s.mu.Unlock()
 		return NewTransferHandleWithTransfer(s, t), nil
 	}
+	s.mu.Unlock()
 
 	t, err := NewTransfer(s, NewAddTransferParamsFromFile(hash, CurrentTimeMillis(), size, file, false))
 	if err != nil {
 		return NewTransferHandle(s), err
 	}
+	s.mu.Lock()
+	if existing, ok := s.transfers[hash]; ok {
+		s.mu.Unlock()
+		return NewTransferHandleWithTransfer(s, existing), nil
+	}
 	s.transfers[hash] = t
+	s.mu.Unlock()
 	return NewTransferHandleWithTransfer(s, t), nil
 }
 
 func (s *Session) AddTransferWithHandler(hash protocol.Hash, size int64, handler disk.FileHandler) (TransferHandle, error) {
 	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	if t, ok := s.transfers[hash]; ok {
+		s.mu.Unlock()
 		return NewTransferHandleWithTransfer(s, t), nil
 	}
+	s.mu.Unlock()
 
 	t, err := NewTransfer(s, NewAddTransferParamsFromHandler(hash, CurrentTimeMillis(), size, handler, false))
 	if err != nil {
 		return NewTransferHandle(s), err
 	}
+	s.mu.Lock()
+	if existing, ok := s.transfers[hash]; ok {
+		s.mu.Unlock()
+		return NewTransferHandleWithTransfer(s, existing), nil
+	}
 	s.transfers[hash] = t
+	s.mu.Unlock()
 	return NewTransferHandleWithTransfer(s, t), nil
 }
 
 func (s *Session) AddTransferParams(atp AddTransferParams) (TransferHandle, error) {
 	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	if t, ok := s.transfers[atp.Hash]; ok {
+		s.mu.Unlock()
 		return NewTransferHandleWithTransfer(s, t), nil
 	}
+	s.mu.Unlock()
 
 	t, err := NewTransfer(s, atp)
 	if err != nil {
 		return NewTransferHandle(s), err
 	}
+	s.mu.Lock()
+	if existing, ok := s.transfers[atp.Hash]; ok {
+		s.mu.Unlock()
+		return NewTransferHandleWithTransfer(s, existing), nil
+	}
 	s.transfers[atp.Hash] = t
+	s.mu.Unlock()
 	return NewTransferHandleWithTransfer(s, t), nil
 }
 
@@ -199,7 +218,20 @@ func (s *Session) GetClientID() int32 {
 }
 
 func (s *Session) GetListenPort() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	return s.settings.ListenPort
+}
+
+func (s *Session) GetUDPPort() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.dhtTracker != nil {
+		if port := s.dhtTracker.ListenPort(); port > 0 {
+			return port
+		}
+	}
+	return s.settings.UDPPort
 }
 
 func (s *Session) GetClientName() string {
@@ -319,12 +351,23 @@ func (s *Session) ConnectNewPeers() {
 }
 
 func (s *Session) Listen() error {
-	if s.settings.ListenPort <= 0 || s.listener != nil {
+	if s.listener != nil {
 		return nil
 	}
-	listener, err := net.ListenTCP("tcp", &net.TCPAddr{Port: s.settings.ListenPort})
+	s.mu.Lock()
+	port := s.settings.ListenPort
+	s.mu.Unlock()
+	if port < 0 {
+		return nil
+	}
+	listener, err := net.ListenTCP("tcp", &net.TCPAddr{Port: port})
 	if err != nil {
 		return err
+	}
+	if addr, ok := listener.Addr().(*net.TCPAddr); ok {
+		s.mu.Lock()
+		s.settings.ListenPort = addr.Port
+		s.mu.Unlock()
 	}
 	s.listener = listener
 	go func(l *net.TCPListener) {
@@ -340,15 +383,33 @@ func (s *Session) Listen() error {
 			}
 		}
 	}(listener)
+	s.startUPnPMapping()
 	return nil
 }
 
 func (s *Session) CloseListener() {
+	s.stopUPnPMapping()
 	if s.listener == nil {
 		return
 	}
 	_ = s.listener.Close()
 	s.listener = nil
+}
+
+func (s *Session) SyncDHTListenPort() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.dhtTracker == nil {
+		return
+	}
+	if port := s.dhtTracker.ListenPort(); port > 0 {
+		s.settings.UDPPort = port
+	}
+}
+
+func (s *Session) RefreshUPnPMapping() {
+	s.stopUPnPMapping()
+	s.startUPnPMapping()
 }
 
 func (s *Session) SecondTick(currentSessionTime, tickIntervalMS int64) {

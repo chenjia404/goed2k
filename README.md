@@ -23,6 +23,7 @@
 - [x] 多个 ED2K server 并发找源
 - [x] `server.met` 加载
 - [x] KAD bootstrap 和 source 查找
+- [x] UPNP 端口映射
 - [x] 资源搜索
 - [x] 暂停、继续、删除任务
 - [x] 状态持久化与恢复
@@ -73,6 +74,7 @@ import (
 func main() {
 	settings := goed2k.NewSettings()
 	settings.ReconnectToServer = true
+	settings.EnableUPnP = true
 
 	client := goed2k.NewClient(settings)
 	if err := client.Start(); err != nil {

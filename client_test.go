@@ -682,6 +682,29 @@ func TestClientWaitReturnsWhenStopped(t *testing.T) {
 	}
 }
 
+func TestClientStartAutoAssignsTCPAndUDPPorts(t *testing.T) {
+	settings := NewSettings()
+	settings.ListenPort = 0
+	settings.UDPPort = 0
+	settings.EnableDHT = true
+
+	client := NewClient(settings)
+	if err := client.Start(); err != nil {
+		t.Fatalf("start client: %v", err)
+	}
+	defer client.Close()
+
+	if got := client.Session().GetListenPort(); got <= 0 {
+		t.Fatalf("expected auto-assigned tcp port, got %d", got)
+	}
+	if got := client.Session().GetUDPPort(); got <= 0 {
+		t.Fatalf("expected auto-assigned udp port, got %d", got)
+	}
+	if got := client.DHTStatus().ListenPort; got <= 0 {
+		t.Fatalf("expected dht status to expose auto-assigned udp port, got %d", got)
+	}
+}
+
 func TestClientEnableDHTLoadsNodesDat(t *testing.T) {
 	settings := NewSettings()
 	settings.ListenPort = 0

@@ -9,5 +9,6 @@ type DHTStatus struct {
 	RunningTraversals int
 	KnownNodes        int
 	InitialBootstrap  bool
+	ListenPort        int
 	StoragePoint      string
 }

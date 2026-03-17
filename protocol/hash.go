@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"strings"
 )
@@ -90,6 +91,34 @@ func (h Hash) Equal(other Hash) bool {
 
 func (h Hash) Compare(other Hash) int {
 	return bytes.Compare(h.value[:], other.value[:])
+}
+
+func (h Hash) IsZero() bool {
+	return h.Equal(Invalid)
+}
+
+func (h Hash) MarshalJSON() ([]byte, error) {
+	if h.Equal(Invalid) {
+		return json.Marshal("")
+	}
+	return json.Marshal(h.String())
+}
+
+func (h *Hash) UnmarshalJSON(data []byte) error {
+	var value string
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	if strings.TrimSpace(value) == "" {
+		*h = Invalid
+		return nil
+	}
+	hash, err := HashFromString(value)
+	if err != nil {
+		return err
+	}
+	*h = hash
+	return nil
 }
 
 func HashFromData(value []byte) (Hash, error) {

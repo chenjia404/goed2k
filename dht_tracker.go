@@ -66,12 +66,16 @@ func NewDHTTracker(listenPort int, timeout time.Duration) *DHTTracker {
 func (t *DHTTracker) Start() error {
 	var err error
 	t.startOnce.Do(func() {
-		conn, listenErr := net.ListenUDP("udp", &net.UDPAddr{Port: t.listenPort})
+		port := t.ListenPort()
+		conn, listenErr := net.ListenUDP("udp", &net.UDPAddr{Port: port})
 		if listenErr != nil {
 			err = listenErr
 			return
 		}
 		t.conn = conn
+		if udpAddr, ok := conn.LocalAddr().(*net.UDPAddr); ok {
+			t.setListenPort(udpAddr.Port)
+		}
 		go t.readLoop()
 	})
 	return err
@@ -287,7 +291,7 @@ func (t *DHTTracker) handleHello(addr *net.UDPAddr, hello kadproto.Hello, reply 
 	if reply {
 		t.writePacket(addr, kadproto.Hello{
 			ID:      t.selfID,
-			TCPPort: uint16(t.listenPort),
+			TCPPort: uint16(t.ListenPort()),
 			Version: kadproto.KademliaVersion,
 		}, kadproto.HelloResOp)
 	}
@@ -299,7 +303,7 @@ func (t *DHTTracker) handleBootstrapRequest(addr *net.UDPAddr) {
 	t.mu.Unlock()
 	_, _ = t.writePacketWithOpcode(addr, kadproto.BootstrapRes{
 		ID:       t.selfID,
-		TCPPort:  uint16(t.listenPort),
+		TCPPort:  uint16(t.ListenPort()),
 		Version:  kadproto.KademliaVersion,
 		Contacts: contacts,
 	})
@@ -442,7 +446,7 @@ func (t *DHTTracker) maybeSendHelloLocked(node *KadRoutingNode) {
 	node.HelloSent = true
 	t.writePacketLocked(node.Addr, kadproto.Hello{
 		ID:      t.selfID,
-		TCPPort: uint16(t.listenPort),
+		TCPPort: uint16(t.ListenPort()),
 		Version: kadproto.KademliaVersion,
 	}, kadproto.HelloReqOp)
 	t.rpc.Invoke(&kadRPCTransaction{endpointKey: node.Addr.String(), opcode: kadproto.HelloResOp})
@@ -577,6 +581,18 @@ func (t *DHTTracker) IsFirewalled() bool {
 	return t.firewalled
 }
 
+func (t *DHTTracker) ListenPort() int {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return t.listenPort
+}
+
+func (t *DHTTracker) setListenPort(port int) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.listenPort = port
+}
+
 func (t *DHTTracker) Status() DHTStatus {
 	t.mu.Lock()
 	defer t.mu.Unlock()
@@ -587,6 +603,7 @@ func (t *DHTTracker) Status() DHTStatus {
 		ReplacementNodes: replacements,
 		RouterNodes:      len(t.table.RouterNodes()),
 		KnownNodes:       len(t.nodes),
+		ListenPort:       t.listenPort,
 	}
 	if t.node != nil {
 		status.RunningTraversals = len(t.node.running)

@@ -267,12 +267,12 @@ func (t *kadTraversal) invoke(o *kadObserver) bool {
 			Target:   t.target,
 			StartPos: 0,
 		}, o.endpoint, o, kadproto.SearchResOp, &t.target.Hash, true)
-	case kadTraversalFirewalled:
-		return t.node.invoke(kadproto.FirewalledReq{
-			TCPPort: uint16(t.node.listenPort()),
-			ID:      t.target,
-			Options: 0,
-		}, o.endpoint, o, kadproto.FirewalledResOp, nil, false)
+		case kadTraversalFirewalled:
+			return t.node.invoke(kadproto.FirewalledReq{
+				TCPPort: uint16(t.node.listenPort()),
+				ID:      t.target,
+				Options: 0,
+			}, o.endpoint, o, kadproto.FirewalledResOp, nil, false)
 	default:
 		return false
 	}

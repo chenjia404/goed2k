@@ -201,6 +201,17 @@ func (c *Client) Start() error {
 		if err != nil {
 			return
 		}
+		if tracker := c.GetDHTTracker(); tracker != nil {
+			if startErr := tracker.Start(); startErr != nil {
+				err = startErr
+				c.session.CloseListener()
+				return
+			}
+			c.session.SyncDHTListenPort()
+			if c.session.settings.EnableUPnP {
+				c.session.RefreshUPnPMapping()
+			}
+		}
 		c.started = true
 		go c.loop()
 		go c.statusLoop()

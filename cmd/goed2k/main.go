@@ -26,6 +26,7 @@ type runConfig struct {
 	listenPort    int
 	udpPort       int
 	enableKAD     bool
+	enableUPnP    bool
 	kadNodesDat   string
 	kadNodes      string
 	peerTimeout   int
@@ -68,6 +69,7 @@ func defaultRunConfig() runConfig {
 		listenPort:    4661,
 		udpPort:       4662,
 		enableKAD:     true,
+		enableUPnP:    true,
 		kadNodesDat:   defaultNodesDat,
 		peerTimeout:   30,
 	}
@@ -95,6 +97,7 @@ func setupClient(cfg runConfig) (*appContext, error) {
 	settings.ListenPort = cfg.listenPort
 	settings.UDPPort = cfg.udpPort
 	settings.EnableDHT = cfg.enableKAD
+	settings.EnableUPnP = cfg.enableUPnP
 	settings.PeerConnectionTimeout = cfg.peerTimeout
 
 	client := ed2k.NewClient(settings)

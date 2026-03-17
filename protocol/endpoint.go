@@ -1,6 +1,7 @@
 package protocol
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -87,6 +88,38 @@ func (e Endpoint) HashCode() int32 {
 	return e.ip + int32(e.port)
 }
 
+func (e Endpoint) IsZero() bool {
+	return e.ip == 0 && e.port == 0
+}
+
+func (e Endpoint) MarshalJSON() ([]byte, error) {
+	if e.IsZero() {
+		return json.Marshal("")
+	}
+	return json.Marshal(e.String())
+}
+
+func (e *Endpoint) UnmarshalJSON(data []byte) error {
+	var value string
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	if strings.TrimSpace(value) == "" {
+		*e = Endpoint{}
+		return nil
+	}
+	host, port, err := splitHostPortText(value)
+	if err != nil {
+		return err
+	}
+	endpoint, err := EndpointFromString(host, port)
+	if err != nil {
+		return err
+	}
+	*e = endpoint
+	return nil
+}
+
 func (e *Endpoint) SetIP(ip int32) {
 	e.ip = ip
 }
@@ -121,6 +154,18 @@ func string2IP(s string) (int32, error) {
 		raw[i] = value
 	}
 	return int32(raw[0] | ((raw[1] << 8) & 0xff00) | ((raw[2] << 16) & 0xff0000) | ((raw[3] << 24) & 0xff000000)), nil
+}
+
+func splitHostPortText(value string) (string, int, error) {
+	host, portString, err := net.SplitHostPort(value)
+	if err != nil {
+		return "", 0, err
+	}
+	port, err := strconv.Atoi(portString)
+	if err != nil {
+		return "", 0, err
+	}
+	return host, port, nil
 }
 
 func int2Address(ip int32) net.IP {

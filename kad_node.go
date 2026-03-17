@@ -30,7 +30,7 @@ func (n *kadNodeImpl) listenPort() int {
 	if n == nil || n.tracker == nil {
 		return 0
 	}
-	return n.tracker.listenPort
+	return n.tracker.ListenPort()
 }
 
 func (n *kadNodeImpl) storagePoint() *net.UDPAddr {
@@ -210,7 +210,7 @@ func (n *kadNodeImpl) processPing(addr *net.UDPAddr) {
 	if n == nil || n.tracker == nil {
 		return
 	}
-	_, _ = n.tracker.writePacket(addr, kadproto.Pong{UDPPort: uint16(n.tracker.listenPort)})
+	_, _ = n.tracker.writePacket(addr, kadproto.Pong{UDPPort: uint16(n.tracker.ListenPort())})
 }
 
 func (n *kadNodeImpl) processHelloReq(addr *net.UDPAddr, hello kadproto.Hello) {

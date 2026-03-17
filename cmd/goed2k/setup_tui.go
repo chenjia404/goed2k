@@ -16,6 +16,7 @@ const (
 	setupFocusServers
 	setupFocusServerMet
 	setupFocusKAD
+	setupFocusUPnP
 	setupFocusKADNodesDat
 	setupFocusKADNodes
 	setupFocusListenPort
@@ -141,10 +142,17 @@ func (m setupModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cfg.enableKAD = !m.cfg.enableKAD
 				return m, nil
 			}
+			if m.focus == setupFocusUPnP {
+				m.cfg.enableUPnP = !m.cfg.enableUPnP
+				return m, nil
+			}
 		case "enter":
 			switch m.focus {
 			case setupFocusKAD:
 				m.cfg.enableKAD = !m.cfg.enableKAD
+				return m, nil
+			case setupFocusUPnP:
+				m.cfg.enableUPnP = !m.cfg.enableUPnP
 				return m, nil
 			case setupFocusLinkInput:
 				m.addLink()
@@ -194,7 +202,8 @@ func (m setupModel) View() string {
 		m.renderField(setupFocusOutDir, "Output", m.outDirInput.View()),
 		m.renderField(setupFocusServers, "Servers", m.serverInput.View()),
 		m.renderField(setupFocusServerMet, "Server.met", m.serverMetInput.View()),
-		m.renderToggle(),
+		m.renderToggle(setupFocusKAD, "KAD", m.cfg.enableKAD),
+		m.renderToggle(setupFocusUPnP, "UPNP", m.cfg.enableUPnP),
 		m.renderField(setupFocusKADNodesDat, "KAD nodes.dat", m.kadNodesDatInput.View()),
 		m.renderField(setupFocusKADNodes, "KAD bootstrap", m.kadNodesInput.View()),
 		m.renderField(setupFocusListenPort, "Listen port", m.listenPortInput.View()),
@@ -205,7 +214,7 @@ func (m setupModel) View() string {
 		m.renderLinks(),
 		m.renderStart(),
 		"",
-		footerStyle.Render("Tab/Shift+Tab move • Enter add/start • Space toggle KAD • d delete link • q quit"),
+		footerStyle.Render("Tab/Shift+Tab move • Enter add/start • Space toggle KAD/UPNP • d delete link • q quit"),
 	}
 	if strings.TrimSpace(m.status) != "" {
 		lines = append(lines, footerStyle.Render(m.status))
@@ -223,18 +232,18 @@ func (m setupModel) renderField(focus int, label, value string) string {
 	return style.Render(fmt.Sprintf("%s%-12s %s", prefix, label, value))
 }
 
-func (m setupModel) renderToggle() string {
+func (m setupModel) renderToggle(focus int, label string, enabled bool) string {
 	value := "off"
-	if m.cfg.enableKAD {
+	if enabled {
 		value = "on"
 	}
 	prefix := "  "
 	style := lipgloss.NewStyle()
-	if m.focus == setupFocusKAD {
+	if m.focus == focus {
 		prefix = "> "
 		style = style.Bold(true).Foreground(lipgloss.Color("69"))
 	}
-	return style.Render(fmt.Sprintf("%s%-12s [%s]", prefix, "KAD", value))
+	return style.Render(fmt.Sprintf("%s%-12s [%s]", prefix, label, value))
 }
 
 func (m setupModel) renderLinks() string {
@@ -635,11 +644,11 @@ func (m settingsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "q", "esc":
 			return m, tea.Quit
 		case "tab", "down":
-			m.focus = (m.focus + 1) % 11
+			m.focus = (m.focus + 1) % 12
 			m.syncFocus()
 			return m, nil
 		case "shift+tab", "up":
-			m.focus = (m.focus - 1 + 11) % 11
+			m.focus = (m.focus - 1 + 12) % 12
 			m.syncFocus()
 			return m, nil
 		case " ":
@@ -647,8 +656,12 @@ func (m settingsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cfg.enableKAD = !m.cfg.enableKAD
 				return m, nil
 			}
+			if m.focus == 4 {
+				m.cfg.enableUPnP = !m.cfg.enableUPnP
+				return m, nil
+			}
 		case "enter":
-			if m.focus == 10 {
+			if m.focus == 11 {
 				next, cmd := m.submit()
 				return next, cmd
 			}
@@ -656,7 +669,11 @@ func (m settingsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cfg.enableKAD = !m.cfg.enableKAD
 				return m, nil
 			}
-			m.focus = (m.focus + 1) % 11
+			if m.focus == 4 {
+				m.cfg.enableUPnP = !m.cfg.enableUPnP
+				return m, nil
+			}
+			m.focus = (m.focus + 1) % 12
 			m.syncFocus()
 			return m, nil
 		}
@@ -670,17 +687,17 @@ func (m settingsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.serverInput, cmd = m.serverInput.Update(msg)
 	case 2:
 		m.serverMetInput, cmd = m.serverMetInput.Update(msg)
-	case 4:
-		m.kadNodesDatInput, cmd = m.kadNodesDatInput.Update(msg)
 	case 5:
-		m.kadNodesInput, cmd = m.kadNodesInput.Update(msg)
+		m.kadNodesDatInput, cmd = m.kadNodesDatInput.Update(msg)
 	case 6:
-		m.listenPortInput, cmd = m.listenPortInput.Update(msg)
+		m.kadNodesInput, cmd = m.kadNodesInput.Update(msg)
 	case 7:
-		m.udpPortInput, cmd = m.udpPortInput.Update(msg)
+		m.listenPortInput, cmd = m.listenPortInput.Update(msg)
 	case 8:
-		m.peerTimeoutInput, cmd = m.peerTimeoutInput.Update(msg)
+		m.udpPortInput, cmd = m.udpPortInput.Update(msg)
 	case 9:
+		m.peerTimeoutInput, cmd = m.peerTimeoutInput.Update(msg)
+	case 10:
 		m.timeoutInput, cmd = m.timeoutInput.Update(msg)
 	}
 	return m, cmd
@@ -693,16 +710,17 @@ func (m settingsModel) View() string {
 		m.renderField(0, "Output", m.outDirInput.View()),
 		m.renderField(1, "Servers", m.serverInput.View()),
 		m.renderField(2, "Server.met", m.serverMetInput.View()),
-		m.renderToggle(),
-		m.renderField(4, "KAD nodes.dat", m.kadNodesDatInput.View()),
-		m.renderField(5, "KAD bootstrap", m.kadNodesInput.View()),
-		m.renderField(6, "Listen port", m.listenPortInput.View()),
-		m.renderField(7, "UDP port", m.udpPortInput.View()),
-		m.renderField(8, "Peer timeout", m.peerTimeoutInput.View()),
-		m.renderField(9, "Timeout", m.timeoutInput.View()),
-		m.renderStart(10, "[ Save settings ]"),
+		m.renderToggle(3, "KAD", m.cfg.enableKAD),
+		m.renderToggle(4, "UPNP", m.cfg.enableUPnP),
+		m.renderField(5, "KAD nodes.dat", m.kadNodesDatInput.View()),
+		m.renderField(6, "KAD bootstrap", m.kadNodesInput.View()),
+		m.renderField(7, "Listen port", m.listenPortInput.View()),
+		m.renderField(8, "UDP port", m.udpPortInput.View()),
+		m.renderField(9, "Peer timeout", m.peerTimeoutInput.View()),
+		m.renderField(10, "Timeout", m.timeoutInput.View()),
+		m.renderStart(11, "[ Save settings ]"),
 		"",
-		footerStyle.Render("Tab/Shift+Tab move • Space toggle KAD • Enter save • q quit"),
+		footerStyle.Render("Tab/Shift+Tab move • Space toggle KAD/UPNP • Enter save • q quit"),
 	}
 	if strings.TrimSpace(m.status) != "" {
 		lines = append(lines, footerStyle.Render(m.status))
@@ -720,18 +738,18 @@ func (m settingsModel) renderField(focus int, label, value string) string {
 	return style.Render(fmt.Sprintf("%s%-12s %s", prefix, label, value))
 }
 
-func (m settingsModel) renderToggle() string {
+func (m settingsModel) renderToggle(focus int, label string, enabled bool) string {
 	value := "off"
-	if m.cfg.enableKAD {
+	if enabled {
 		value = "on"
 	}
 	prefix := "  "
 	style := lipgloss.NewStyle()
-	if m.focus == 3 {
+	if m.focus == focus {
 		prefix = "> "
 		style = style.Bold(true).Foreground(lipgloss.Color("69"))
 	}
-	return style.Render(fmt.Sprintf("%s%-12s [%s]", prefix, "KAD", value))
+	return style.Render(fmt.Sprintf("%s%-12s [%s]", prefix, label, value))
 }
 
 func (m settingsModel) renderStart(focus int, label string) string {
@@ -763,17 +781,17 @@ func (m *settingsModel) syncFocus() {
 		m.serverInput.Focus()
 	case 2:
 		m.serverMetInput.Focus()
-	case 4:
-		m.kadNodesDatInput.Focus()
 	case 5:
-		m.kadNodesInput.Focus()
+		m.kadNodesDatInput.Focus()
 	case 6:
-		m.listenPortInput.Focus()
+		m.kadNodesInput.Focus()
 	case 7:
-		m.udpPortInput.Focus()
+		m.listenPortInput.Focus()
 	case 8:
-		m.peerTimeoutInput.Focus()
+		m.udpPortInput.Focus()
 	case 9:
+		m.peerTimeoutInput.Focus()
+	case 10:
 		m.timeoutInput.Focus()
 	}
 }

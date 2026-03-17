@@ -416,6 +416,12 @@ func (m tuiModel) renderSearchPage() string {
 		fmt.Sprintf("%s: %s", inputLabel, m.searchInput.View()),
 		fmt.Sprintf("state=%s  scope=%s  total=%d", m.search.State, searchScopeLabel(m.search.Params.Scope), len(m.search.Results)),
 	}
+	if result := m.selectedSearchResult(); result != nil {
+		info = append(info, fmt.Sprintf("selected=%s", emptyFallback(result.FileName, result.Hash.String())))
+		if link := result.ED2KLink(); link != "" {
+			info = append(info, "ed2k="+trimString(link, maxInt(24, m.width-16)))
+		}
+	}
 	if m.search.KadKeyword != "" {
 		info = append(info, fmt.Sprintf("kad_keyword=%q", m.search.KadKeyword))
 	}
@@ -581,6 +587,14 @@ func (m *tuiModel) downloadSelectedSearchResult() error {
 	return m.downloadSearchResult(cursor)
 }
 
+func (m tuiModel) selectedSearchResult() *ed2k.SearchResult {
+	cursor := m.searchTable.Cursor()
+	if cursor < 0 || cursor >= len(m.search.Results) {
+		return nil
+	}
+	return &m.search.Results[cursor]
+}
+
 func (m *tuiModel) toggleSelectedPause() {
 	transfer := m.selectedTransfer()
 	if transfer == nil {
@@ -636,8 +650,8 @@ func (m tuiModel) renderHeader() string {
 	status := fmt.Sprintf(
 		"goed2k  id=%s tcp=%d udp=%d transfers=%d peers=%d progress=%.1f%% recv=%.1f%% rate=%s up=%s",
 		idClass,
-		m.cfg.listenPort,
-		m.cfg.udpPort,
+		m.runtimeListenPort(),
+		m.runtimeUDPPort(),
 		len(m.status.Transfers),
 		len(m.status.Peers),
 		percent(m.status.TotalDone, m.status.TotalWanted),
@@ -675,9 +689,9 @@ func (m tuiModel) renderEmptyState(width int) string {
 		fmt.Sprintf("output=%s", emptyFallback(m.cfg.outDir, ".")),
 		fmt.Sprintf("servers=%s", emptyFallback(m.cfg.serverAddr, "-")),
 		fmt.Sprintf("server.met=%s", emptyFallback(m.cfg.serverMetPath, "-")),
-		fmt.Sprintf("kad=%t  nodes.dat=%s", m.cfg.enableKAD, emptyFallback(m.cfg.kadNodesDat, "-")),
+		fmt.Sprintf("kad=%t  upnp=%t  nodes.dat=%s", m.cfg.enableKAD, m.cfg.enableUPnP, emptyFallback(m.cfg.kadNodesDat, "-")),
 		fmt.Sprintf("kad bootstrap=%s", emptyFallback(m.cfg.kadNodes, "-")),
-		fmt.Sprintf("listen=%d  udp=%d  peer-timeout=%ds", m.cfg.listenPort, m.cfg.udpPort, m.cfg.peerTimeout),
+		fmt.Sprintf("listen=%d  udp=%d  peer-timeout=%ds", m.runtimeListenPort(), m.runtimeUDPPort(), m.cfg.peerTimeout),
 	}
 	if !m.deadline.IsZero() {
 		lines = append(lines, fmt.Sprintf("timeout=%s", time.Until(m.deadline).Round(time.Second)))
@@ -706,6 +720,9 @@ func (m tuiModel) renderTransferSection(transfer ed2k.TransferSnapshot, width in
 		fmt.Sprintf("done=%d  recv=%d  total=%d", transfer.Status.TotalDone, transfer.Status.TotalReceived, transfer.Status.TotalWanted),
 		progressBarLine("done", transfer.Status.TotalDone, transfer.Status.TotalWanted, width-8),
 		progressBarLine("recv", transfer.Status.TotalReceived, transfer.Status.TotalWanted, width-8),
+	}
+	if link := transfer.ED2KLink(); link != "" {
+		lines = append(lines, "ed2k="+trimString(link, maxInt(24, width-8)))
 	}
 	return strings.Join(lines, "\n")
 }
@@ -789,7 +806,7 @@ func (m tuiModel) renderPeerSection(transfer ed2k.TransferSnapshot, width int) s
 func (m tuiModel) renderServerSection(width int) string {
 	lines := []string{
 		titleStyle.Render("Servers"),
-		fmt.Sprintf("listen tcp=%d udp=%d", m.cfg.listenPort, m.cfg.udpPort),
+		fmt.Sprintf("listen tcp=%d udp=%d", m.runtimeListenPort(), m.runtimeUDPPort()),
 	}
 	for _, server := range m.status.Servers {
 		prefix := " "
@@ -809,6 +826,26 @@ func (m tuiModel) renderServerSection(width int) string {
 		lines = append(lines, "no servers")
 	}
 	return strings.Join(lines, "\n")
+}
+
+func (m tuiModel) runtimeListenPort() int {
+	if m.client == nil || m.client.Session() == nil {
+		return m.cfg.listenPort
+	}
+	if port := m.client.Session().GetListenPort(); port >= 0 {
+		return port
+	}
+	return m.cfg.listenPort
+}
+
+func (m tuiModel) runtimeUDPPort() int {
+	if m.client == nil || m.client.Session() == nil {
+		return m.cfg.udpPort
+	}
+	if port := m.client.Session().GetUDPPort(); port >= 0 {
+		return port
+	}
+	return m.cfg.udpPort
 }
 
 func progressBarLine(label string, value, total int64, width int) string {

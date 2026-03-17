@@ -45,6 +45,13 @@ type TransferSnapshot struct {
 	Pieces      []PieceSnapshot
 }
 
+func (t TransferSnapshot) ED2KLink() string {
+	if t.FileName == "" || t.Size <= 0 || t.Hash.Equal(protocol.Invalid) {
+		return ""
+	}
+	return FormatLink(t.FileName, t.Size, t.Hash)
+}
+
 type ClientPeerSnapshot struct {
 	TransferHash protocol.Hash
 	FileName     string
