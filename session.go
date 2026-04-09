@@ -6,11 +6,11 @@ import (
 	"os"
 	"sync"
 
-	"github.com/monkeyWie/goed2k/disk"
-	"github.com/monkeyWie/goed2k/internal/logx"
-	"github.com/monkeyWie/goed2k/protocol"
-	kadproto "github.com/monkeyWie/goed2k/protocol/kad"
-	serverproto "github.com/monkeyWie/goed2k/protocol/server"
+	"github.com/goed2k/core/disk"
+	"github.com/goed2k/core/internal/logx"
+	"github.com/goed2k/core/protocol"
+	kadproto "github.com/goed2k/core/protocol/kad"
+	serverproto "github.com/goed2k/core/protocol/server"
 )
 
 type Session struct {

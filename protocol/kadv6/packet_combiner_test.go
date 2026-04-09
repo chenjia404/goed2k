@@ -5,7 +5,7 @@ import (
 	"net"
 	"testing"
 
-	"github.com/monkeyWie/goed2k/protocol"
+	"github.com/goed2k/core/protocol"
 )
 
 func testEntryV6(t *testing.T) EntryV6 {

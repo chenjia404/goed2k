@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/monkeyWie/goed2k/protocol"
-	clientproto "github.com/monkeyWie/goed2k/protocol/client"
+	"github.com/goed2k/core/protocol"
+	clientproto "github.com/goed2k/core/protocol/client"
 )
 
 func TestPeersForSourceExchangeExcludesAndLimits(t *testing.T) {

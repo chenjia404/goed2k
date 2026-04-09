@@ -1,7 +1,7 @@
 package goed2k
 
 import (
-	"github.com/monkeyWie/goed2k/protocol"
+	"github.com/goed2k/core/protocol"
 )
 
 // SharedFiles 返回共享库快照。

@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/monkeyWie/goed2k/data"
-	"github.com/monkeyWie/goed2k/protocol"
+	"github.com/goed2k/core/data"
+	"github.com/goed2k/core/protocol"
 )
 
 // SharedOrigin 表示共享文件来源：下载完成入库或本地导入。

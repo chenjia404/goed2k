@@ -8,10 +8,10 @@ import (
 	"net"
 	"path/filepath"
 
-	"github.com/monkeyWie/goed2k/data"
-	"github.com/monkeyWie/goed2k/internal/logx"
-	"github.com/monkeyWie/goed2k/protocol"
-	clientproto "github.com/monkeyWie/goed2k/protocol/client"
+	"github.com/goed2k/core/data"
+	"github.com/goed2k/core/internal/logx"
+	"github.com/goed2k/core/protocol"
+	clientproto "github.com/goed2k/core/protocol/client"
 )
 
 func debugPeerf(format string, args ...any) {

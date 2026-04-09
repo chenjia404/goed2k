@@ -10,7 +10,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	ed2k "github.com/monkeyWie/goed2k"
+	ed2k "github.com/goed2k/core"
 )
 
 type statusMsg ed2k.ClientStatusEvent

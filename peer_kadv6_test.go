@@ -4,8 +4,8 @@ import (
 	"net"
 	"testing"
 
-	"github.com/monkeyWie/goed2k/protocol"
-	kadv6 "github.com/monkeyWie/goed2k/protocol/kadv6"
+	"github.com/goed2k/core/protocol"
+	kadv6 "github.com/goed2k/core/protocol/kadv6"
 )
 
 func TestPeerFromKADV6SearchEntry(t *testing.T) {

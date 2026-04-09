@@ -1,7 +1,7 @@
 package goed2k
 
 import (
-	kadv6 "github.com/monkeyWie/goed2k/protocol/kadv6"
+	kadv6 "github.com/goed2k/core/protocol/kadv6"
 )
 
 // PeerFromKADV6SearchEntry 将 KADV6 SearchEntry 中的 TCP 源转为 Policy 用 Peer（Connectable=true）。

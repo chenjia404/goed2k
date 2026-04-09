@@ -1,7 +1,7 @@
 package goed2k
 
 import (
-	serverproto "github.com/monkeyWie/goed2k/protocol/server"
+	serverproto "github.com/goed2k/core/protocol/server"
 )
 
 // collectPublishableOfferFiles 合并「已完成可发布的 Transfer」与 SharedStore，按 hash 去重。

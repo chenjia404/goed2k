@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net"
 
-	"github.com/monkeyWie/goed2k/protocol"
+	"github.com/goed2k/core/protocol"
 )
 
 type Peer struct {

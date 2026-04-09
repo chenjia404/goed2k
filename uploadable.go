@@ -1,6 +1,6 @@
 package goed2k
 
-import "github.com/monkeyWie/goed2k/protocol"
+import "github.com/goed2k/core/protocol"
 
 // UploadableResource 上传所需的最小能力（Transfer 与 SharedFile 均实现）。
 type UploadableResource interface {

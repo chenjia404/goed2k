@@ -4,7 +4,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/monkeyWie/goed2k/protocol"
+	"github.com/goed2k/core/protocol"
 )
 
 // ComputeEd2kFileMeta 从本地文件计算 ed2k 根哈希、大小与分片哈希列表（与 eMule 分片规则一致）。

@@ -3,7 +3,7 @@ package goed2k
 import (
 	"slices"
 
-	"github.com/monkeyWie/goed2k/protocol"
+	"github.com/goed2k/core/protocol"
 )
 
 const (

@@ -1,6 +1,6 @@
 package client
 
-import "github.com/monkeyWie/goed2k/protocol"
+import "github.com/goed2k/core/protocol"
 
 const (
 	opHello             byte = 0x01

@@ -4,7 +4,7 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/monkeyWie/goed2k/protocol"
+	"github.com/goed2k/core/protocol"
 )
 
 // SharedStore 内存中的共享文件索引（按 hash 去重）。

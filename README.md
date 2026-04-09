@@ -47,13 +47,13 @@
 ### 可执行文件
 
 ```bash
-go install github.com/monkeyWie/goed2k/cmd/goed2k@latest
+go install github.com/goed2k/core/cmd/goed2k@latest
 ```
 
 ### 作为库
 
 ```bash
-go get github.com/monkeyWie/goed2k
+go get github.com/goed2k/core
 ```
 
 ## 快速开始
@@ -78,7 +78,7 @@ package main
 import (
 	"log"
 
-	"github.com/monkeyWie/goed2k"
+	"github.com/goed2k/core"
 )
 
 func main() {

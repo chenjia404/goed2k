@@ -4,9 +4,9 @@ import (
 	"net"
 	"time"
 
-	"github.com/monkeyWie/goed2k/internal/logx"
-	"github.com/monkeyWie/goed2k/protocol"
-	kadproto "github.com/monkeyWie/goed2k/protocol/kad"
+	"github.com/goed2k/core/internal/logx"
+	"github.com/goed2k/core/protocol"
+	kadproto "github.com/goed2k/core/protocol/kad"
 )
 
 var kadPeriodicPublishInterval = Minutes(30)
