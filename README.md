@@ -33,6 +33,14 @@
 - [x] 任务、peer、server、piece 状态快照
 - [x] 任务进度订阅
 - [x] 可交互的终端下载管理器
+- [x] 客户端间来源交换（Source Exchange，`OP_REQUESTSOURCES2` / `OP_ANSWERSOURCES2`）
+
+## 相关文档
+
+- [本地共享库与周边能力：分阶段实现说明（中文）](docs/library-implementation-phases-CN.md)
+- [Kademlia v6 协议说明（中文）](docs/kadv6-protocol-CN.md)
+- [客户端来源交换（Source Exchange）实现说明（中文）](docs/source-exchange-CN.md)
+- [Secure Ident 计划](docs/secure-ident-plan.md)
 
 ## 安装
 
